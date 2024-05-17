@@ -1,0 +1,16 @@
+service: () -> {
+    bookAppointment: (record {clientId:text; time:text; serviceId:text}) -> (variant {Ok:record {serviceName:text; clientId:text; clientName:text; time:text; created_at:nat64; serviceId:text; clientPhoneNo:text; appointmentId:text}; Err:variant {InvalidPayload:text; NotFound:text}});
+    createClient: (record {name:text; email:text; address:text; phoneNo:text}) -> (variant {Ok:record {id:text; "principal":principal; appointment:vec text; name:text; email:text; address:text; phoneNo:text}; Err:variant {InvalidPayload:text; NotFound:text}});
+    createProfessional: (record {name:text; email:text; address:text; phoneNo:text}) -> (variant {Ok:record {id:text; "principal":principal; name:text; email:text; address:text; appointments:vec text; phoneNo:text}; Err:variant {InvalidPayload:text; NotFound:text}});
+    createService: (record {name:text; description:text; price:text}) -> (variant {Ok:record {id:text; name:text; description:text; price:text}; Err:variant {InvalidPayload:text; NotFound:text}});
+    getAppointment: (text) -> (opt record {serviceName:text; clientId:text; clientName:text; time:text; created_at:nat64; serviceId:text; clientPhoneNo:text; appointmentId:text}) query;
+    getAppointments: () -> (vec record {serviceName:text; clientId:text; clientName:text; time:text; created_at:nat64; serviceId:text; clientPhoneNo:text; appointmentId:text}) query;
+    getClient: (text) -> (opt record {id:text; "principal":principal; appointment:vec text; name:text; email:text; address:text; phoneNo:text}) query;
+    getClientByPrincipal: () -> (variant {Ok:record {id:text; "principal":principal; appointment:vec text; name:text; email:text; address:text; phoneNo:text}; Err:variant {InvalidPayload:text; NotFound:text}}) query;
+    getClients: () -> (vec record {id:text; "principal":principal; appointment:vec text; name:text; email:text; address:text; phoneNo:text}) query;
+    getProfessional: (text) -> (opt record {id:text; "principal":principal; name:text; email:text; address:text; appointments:vec text; phoneNo:text}) query;
+    getProfessionalByPrincipal: () -> (variant {Ok:record {id:text; "principal":principal; name:text; email:text; address:text; appointments:vec text; phoneNo:text}; Err:variant {InvalidPayload:text; NotFound:text}}) query;
+    getProfessionals: () -> (vec record {id:text; "principal":principal; name:text; email:text; address:text; appointments:vec text; phoneNo:text}) query;
+    getService: (text) -> (opt record {id:text; name:text; description:text; price:text}) query;
+    getServices: () -> (vec record {id:text; name:text; description:text; price:text}) query;
+}
