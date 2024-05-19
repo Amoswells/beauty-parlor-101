@@ -1,70 +1,87 @@
-# ICP 201 Language Learning System
+# Beauty Parlor Management System
 
 ## Overview
 
-This is a comprehensive system for language learning, facilitating decentralized language courses, user interactions, and progress tracking on the Internet Computer blockchain Typescript challenge 201. It includes features like course enrollment, lesson completion, progress tracking, and user management, demonstrating the capabilities of smart contracts for real-world language learning applications.
+This is a comprehensive management system for a beauty parlor, built on the Internet Computer using the `azle` library. It facilitates the management of services, clients, professionals, and appointments in a decentralized and secure manner. The system includes features for creating and retrieving services, clients, and professionals, as well as booking and managing appointments.
 
 ## Structure
 
 ### 1. Data Structures
 
-- **Course**: Represents a language course with properties like `id`, `title`, `description`, `language`, `level`, `lessons`, and `instructor`.
-- **CoursePayload**: Used for creating or updating a course with necessary properties.
-- **User**: Represents a user with properties like `id`, `name`, `email`, `languagePreferences`, `enrolledCourses`, and `progress`.
-- **ErrorType**: Variant type representing different error scenarios.
+- **Service**: Represents a beauty parlor service with properties like `id`, `name`, `description`, and `price`.
+- **ServicePayload**: Used for creating or updating a service with necessary properties.
+- **Client**: Represents a client with properties like `id`, `principal`, `name`, `phoneNo`, `email`, `address`, and `appointment`.
+- **ClientPayload**: Used for creating or updating a client with necessary properties.
+- **Professional**: Represents a professional with properties like `id`, `principal`, `name`, `phoneNo`, `email`, `address`, and `appointments`.
+- **ProfessionalPayload**: Used for creating or updating a professional with necessary properties.
+- **Status**: Variant type representing different appointment statuses (`Pending`, `Completed`, `Cancelled`).
+- **Booking**: Represents a booking with properties like `id`, `serviceId`, `clientId`, and `time`.
+- **BookingPayload**: Used for creating or updating a booking with necessary properties.
+- **AppointmentInfo**: Detailed information about an appointment including `appointmentId`, `created_at`, `serviceId`, `clientId`, `clientName`, `clientPhoneNo`, `serviceName`, and `time`.
+- **Error**: Variant type representing different error scenarios (`NotFound`, `InvalidPayload`).
 
 ### 2. Storage
 
-- `languageStorage`: A `StableBTreeMap` to store languages by their IDs.
-- `enrolmentStorage`: A `StableBTreeMap` to store enrolment status.
-- `usersStorage`: A `StableBTreeMap` to store users by their IDs.
+- **ServicesStorage**: A `StableBTreeMap` to store services by their IDs.
+- **ClientsStorage**: A `StableBTreeMap` to store clients by their IDs.
+- **ProfessionalsStorage**: A `StableBTreeMap` to store professionals by their IDs.
+- **AppointmentsStorage**: A `StableBTreeMap` to store appointment information by their IDs.
 
 ### 3. Canister Functions
 
-- **Enroll User**: Enrolls a user in a language course.
-- **Complete Lesson**: Marks a lesson as completed for a user.
-- **Get Courses**: Retrieves all courses from storage.
-- **Get Lessons**: Retrieves all lessons from storage.
-- **Get Course**: Retrieves a course by its ID.
-- **Get Lesson**: Retrieves a lesson by its ID.
-- **Get User**: Retrieves a user by their ID.
-- **Update User**: Updates an existing user's progress.
-- **Delete User**: Deletes a user by their ID.
+- **createService**: Creates a new service.
+- **getServices**: Retrieves all services.
+- **getService**: Retrieves a service by its ID.
+- **createClient**: Creates a new client.
+- **getClients**: Retrieves all clients.
+- **getClientByPrincipal**: Retrieves a client by their principal.
+- **getClient**: Retrieves a client by their ID.
+- **createProfessional**: Creates a new professional.
+- **getProfessionals**: Retrieves all professionals.
+- **getProfessional**: Retrieves a professional by their ID.
+- **getProfessionalByPrincipal**: Retrieves a professional by their principal.
+- **bookAppointment**: Books a new appointment.
+- **getAppointments**: Retrieves all appointments.
+- **getAppointment**: Retrieves an appointment by its ID.
 
 ### 4. Helper Functions
 
-- **Generate Correlation ID**: Generates a correlation ID for tracking user progress.
-- **Verify Completion**: Verifies lesson completion based on user interactions.
+- **globalThis.crypto**: Generates random values for creating unique IDs.
 
-### 5. Dependencies
+### 5. Error Handling
 
-- Imports necessary modules from the `"azle"` library.
-- Utilizes IC APIs like `ic.call` for blockchain interaction.
-
-### 6. Miscellaneous
-
-- Uses `globalThis.crypto` for generating random values.
-- Uses custom correlation IDs for tracking progress.
-
-### 7. Error Handling
-
-- Functions return `Result` types to handle success or different error scenarios.
+- Functions return `Result` types to handle success or different error scenarios, ensuring robust error management.
 
 ## Things to be explained in the course
 
-1. What is Internet Identity? More details here: <https://internetcomputer.org/internet-identity>
-2. What is Principal, Identity, Address? <https://internetcomputer.org/internet-identity>
-3. Canister-to-canister communication and how multi-canister development is done? <https://medium.com/icp-league/explore-backend-multi-canister-development-on-ic-680064b06320>
+1. **Internet Identity**: More details here: <https://internetcomputer.org/internet-identity>
+2. **Principal, Identity, Address**: Detailed explanation: <https://internetcomputer.org/internet-identity>
+3. **Canister-to-canister communication**: Understanding multi-canister development: <https://medium.com/icp-league/explore-backend-multi-canister-development-on-ic-680064b06320>
 
-## How to deploy canisters implemented in the course
+## How to Deploy Canisters Implemented in the Course
 
-### Backend canister
+### Backend Canister
 
-`dfx deploy backend` - deploys the backend canister where the business logic is implemented.
+To deploy the backend canister where the business logic is implemented:
 
-Do not forget to run `dfx generate backend` anytime you add/remove functions in the canister or when you change the signatures.
-Otherwise, these changes won't be reflected in IDL's and won't work when called using the JS agent.
+```bash
+dfx deploy backend
+```
 
-### Frontend canister
+Ensure to run the following command anytime you add/remove functions in the canister or change the signatures:
 
-`dfx deploy frontend` - deployes the frontend app for the backend canister on IC.
+```bash
+dfx generate backend
+```
+
+This will reflect the changes in IDLs, ensuring the functions work correctly when called using the JS agent.
+
+### Frontend Canister
+
+To deploy the frontend application for the backend canister on the Internet Computer:
+
+```bash
+dfx deploy frontend
+```
+
+Ensure both the backend and frontend canisters are correctly deployed for full functionality.
