@@ -17,7 +17,6 @@ import {
   Result,
   Canister,
 } from "azle";
-
 import { v4 as uuidv4 } from "uuid";
 
 const Service = Record({
@@ -40,7 +39,7 @@ const Client = Record({
   phoneNo: text,
   email: text,
   address: text,
-  appointment: Vec(text),
+  appointments: Vec(text),
 });
 
 const ClientPayload = Record({
@@ -68,9 +67,9 @@ const ProfessionalPayload = Record({
 });
 
 const Status = Variant({
-  Pending: text,
-  Completed: text,
-  Cancelled: text,
+  Pending: null,
+  Completed: null,
+  Cancelled: null,
 });
 
 const Booking = Record({
@@ -83,6 +82,7 @@ const Booking = Record({
 const BookingPayload = Record({
   serviceId: text,
   clientId: text,
+  professionalId: text,
   time: text,
 });
 
@@ -94,13 +94,17 @@ const AppointmentInfo = Record({
   clientName: text,
   clientPhoneNo: text,
   serviceName: text,
+  professionalId: text,
+  professionalName: text,
   time: text,
+  status: Status,
 });
 
 const UpdateAppointmentInfo = Record({
   id: text,
-  serviceName: text,
-  time: text,
+  serviceName: Opt(text),
+  time: Opt(text),
+  status: Opt(Status),
 });
 
 const Error = Variant({
@@ -131,11 +135,22 @@ export default Canister({
     return ServicesStorage.get(id);
   }),
 
+  deleteService: update([text], Result(text, Error), (id) => {
+    const serviceOpt = ServicesStorage.get(id);
+    if ("None" in serviceOpt) {
+      return Err({
+        NotFound: `Service with ID ${id} not found`,
+      });
+    }
+    ServicesStorage.remove(id);
+    return Ok(`Service with ID ${id} deleted`);
+  }),
+
   createClient: update([ClientPayload], Result(Client, Error), (payload) => {
     const client = {
       id: uuidv4(),
       principal: ic.caller(),
-      appointment: [],
+      appointments: [],
       ...payload,
     };
 
@@ -222,12 +237,22 @@ export default Canister({
           NotFound: `Service with ID ${payload.serviceId} not found`,
         });
       }
+
+      const professionalOpt = ProfessionalsStorage.get(payload.professionalId);
+      if ("None" in professionalOpt) {
+        return Err({
+          NotFound: `Professional with ID ${payload.professionalId} not found`,
+        });
+      }
+
       const client = clientOpt.Some;
       const service = serviceOpt.Some;
+      const professional = professionalOpt.Some;
       const booking = {
         id: uuidv4(),
         clientId: client.id,
         serviceId: service.id,
+        professionalId: professional.id,
         time: payload.time,
       };
 
@@ -240,13 +265,16 @@ export default Canister({
         serviceName: service.name,
         clientName: client.name,
         clientPhoneNo: client.phoneNo,
+        professionalId: booking.professionalId,
+        professionalName: professional.name,
+        status: Status.Pending,
       };
 
-      ClientsStorage.insert(client.id, {
-        ...client,
-        appointment: [appointment.appointmentId],
-      });
+      client.appointments.push(appointment.appointmentId);
+      professional.appointments.push(appointment.appointmentId);
 
+      ClientsStorage.insert(client.id, client);
+      ProfessionalsStorage.insert(professional.id, professional);
       AppointmentsStorage.insert(appointment.appointmentId, appointment);
 
       return Ok(appointment);
@@ -273,34 +301,46 @@ export default Canister({
       }
 
       const appointment = appointmentOpt.Some;
-      const clientOpt = ClientsStorage.get(appointment.clientId);
-      if ("None" in clientOpt) {
-        return Err({
-          NotFound: `Client with ID ${appointment.clientId} not found`,
-        });
+
+      if ("Some" in payload.serviceName) {
+        appointment.serviceName = payload.serviceName.Some;
       }
 
-      const serviceOpt = ServicesStorage.get(appointment.serviceId);
-      if ("None" in serviceOpt) {
-        return Err({
-          NotFound: `Service with ID ${appointment.serviceId} not found`,
-        });
+      if ("Some" in payload.time) {
+        appointment.time = payload.time.Some;
       }
 
-      const updatedAppointment = {
-        ...appointment,
-        serviceName: payload.serviceName,
-        time: payload.time,
-      };
+      if ("Some" in payload.status) {
+        appointment.status = payload.status.Some;
+      }
 
-      AppointmentsStorage.insert(
-        updatedAppointment.appointmentId,
-        updatedAppointment
-      );
+      AppointmentsStorage.insert(appointment.appointmentId, appointment);
 
-      return Ok(updatedAppointment);
+      return Ok(appointment);
     }
   ),
+
+  updateClientDetails: update([text, ClientPayload], Result(Client, Error), (id, payload) => {
+    const clientOpt = ClientsStorage.get(id);
+    if ("None" in clientOpt) {
+      return Err({ NotFound: `Client with ID ${id} not found` });
+    }
+    const client = clientOpt.Some;
+    const updatedClient = { ...client, ...payload };
+    ClientsStorage.insert(id, updatedClient);
+    return Ok(updatedClient);
+  }),
+
+  updateProfessionalDetails: update([text, ProfessionalPayload], Result(Professional, Error), (id, payload) => {
+    const professionalOpt = ProfessionalsStorage.get(id);
+    if ("None" in professionalOpt) {
+      return Err({ NotFound: `Professional with ID ${id} not found` });
+    }
+    const professional = professionalOpt.Some;
+    const updatedProfessional = { ...professional, ...payload };
+    ProfessionalsStorage.insert(id, updatedProfessional);
+    return Ok(updatedProfessional);
+  }),
 });
 
 globalThis.crypto = {
