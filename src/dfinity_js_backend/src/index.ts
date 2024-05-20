@@ -97,6 +97,12 @@ const AppointmentInfo = Record({
   time: text,
 });
 
+const UpdateAppointmentInfo = Record({
+  id: text,
+  serviceName: text,
+  time: text,
+});
+
 const Error = Variant({
   NotFound: text,
   InvalidPayload: text,
@@ -254,6 +260,47 @@ export default Canister({
   getAppointment: query([text], Opt(AppointmentInfo), (id) => {
     return AppointmentsStorage.get(id);
   }),
+
+  updateAppointment: update(
+    [UpdateAppointmentInfo],
+    Result(AppointmentInfo, Error),
+    (payload) => {
+      const appointmentOpt = AppointmentsStorage.get(payload.id);
+      if ("None" in appointmentOpt) {
+        return Err({
+          NotFound: `Appointment with ID ${payload.id} not found`,
+        });
+      }
+
+      const appointment = appointmentOpt.Some;
+      const clientOpt = ClientsStorage.get(appointment.clientId);
+      if ("None" in clientOpt) {
+        return Err({
+          NotFound: `Client with ID ${appointment.clientId} not found`,
+        });
+      }
+
+      const serviceOpt = ServicesStorage.get(appointment.serviceId);
+      if ("None" in serviceOpt) {
+        return Err({
+          NotFound: `Service with ID ${appointment.serviceId} not found`,
+        });
+      }
+
+      const updatedAppointment = {
+        ...appointment,
+        serviceName: payload.serviceName,
+        time: payload.time,
+      };
+
+      AppointmentsStorage.insert(
+        updatedAppointment.appointmentId,
+        updatedAppointment
+      );
+
+      return Ok(updatedAppointment);
+    }
+  ),
 });
 
 globalThis.crypto = {
